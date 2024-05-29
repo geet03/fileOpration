@@ -82,6 +82,10 @@ public class Main {
     try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
       String line;
       while ((line = br.readLine()) != null) {
+        if(!line.startsWith("Allow")){
+          updatedLines.add(line);
+          continue;
+        }
         String[] parts = line.split(":");
         if (parts.length == 2) {
           String[] sourceTargetPair = parts[0].split("\\s+");
@@ -118,10 +122,10 @@ public class Main {
     StringBuilder sb = new StringBuilder();
     String[] keys = key.split(" ");
     String keyLine = keys[0] + " " + keys[1] + ":" + keys[2]+" ";
-    sb.append("Allow ").append(keyLine).append(" {");
+    sb.append("Allow ").append(keyLine).append(" { ");
     String commaSeparatedValues = String.join(", ", strings);
     sb.append(commaSeparatedValues);
-    sb.append("}");
+    sb.append(" }");
     return sb.toString();
   }
 
@@ -131,15 +135,23 @@ public class Main {
     try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
       String line;
       while ((line = br.readLine()) != null) {
+        if(!line.startsWith("Allow")){
+          continue;
+        }
+        line = line.replace(";", "");
         String[] parts = line.split(":");
         if (parts.length == 2) {
           String[] sourceTargetPair = parts[0].split("\\s+");
-          String[] classOpsPair = parts[1].split("\\{")[0].trim().split("\\s+");
-          String[] operations = parts[1].split("\\{")[1].replace("}", "").trim().split(",");
+          parts[1] = parts[1].replace(",", "");
+          String[] classOpsPair = parts[1].split("\\s+");
           String key = sourceTargetPair[1] +" " +sourceTargetPair[2] +" "+ classOpsPair[0];
           Set<String> values = new HashSet<>();
-          for (String operation : operations) {
-            values.add(operation.trim());
+          for (int i = 1; i < classOpsPair.length; i++) {
+            String operations = classOpsPair[i].replace("{", "").replace("}", "").trim();
+            if(operations.isEmpty()){
+              continue;
+            }
+            values.add(operations.trim());
           }
           dataMap.put(key, values);
         }
